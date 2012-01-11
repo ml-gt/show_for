@@ -2,8 +2,26 @@ module ShowFor
   module Attribute
     def attribute(attribute_name, options={}, &block)
       apply_default_options!(attribute_name, options)
+      # block = get_block_from_value_option unless block
+      
+      if (options[:value] && !block)
+          if options[:value].is_a? Symbol
+            if (@object.send(attribute_name).is_a?(Array) || @object.send(attribute_name).is_a?(Hash) )
+              block = lambda { |element| element.send(options[:value]) }
+            else
+              block = lambda { @object.send(attribute_name).send(options[:value]) }
+            end
+          else
+            if options[:value].is_a? Proc
+              block = options[:value]
+            else
+              block = lambda { options[:value] } 
+            end
+          end
+      end
+      
       collection_block, block = block, nil if collection_block?(block)
-
+      
       value = if block
         block
       elsif @object.respond_to?(:"human_#{attribute_name}")
