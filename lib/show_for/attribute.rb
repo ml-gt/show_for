@@ -2,24 +2,7 @@ module ShowFor
   module Attribute
     def attribute(attribute_name, options={}, &block)
       apply_default_options!(attribute_name, options)
-      # block = get_block_from_value_option unless block
-      
-      if (options[:value] && !block)
-          if options[:value].is_a? Symbol
-            if (@object.send(attribute_name).is_a?(Array) || @object.send(attribute_name).is_a?(Hash) )
-              block = lambda { |element| element.send(options[:value]) }
-            else
-              block = lambda { @object.send(attribute_name).send(options[:value]) }
-            end
-          else
-            if options[:value].is_a? Proc
-              block = options[:value]
-            else
-              block = lambda { options[:value] } 
-            end
-          end
-      end
-      
+      block = get_block_from_value_option(attribute_name, options) unless block
       collection_block, block = block, nil if collection_block?(block)
       
       value = if block
@@ -52,6 +35,26 @@ module ShowFor
         attribute(attribute_name)
       end.join.html_safe
     end
+    
+private
+
+    def get_block_from_value_option(attribute_name, options)
+      return unless options_value = options[:value]
+      if options_value.is_a? Symbol
+        if (@object.send(attribute_name).is_a?(Array) || @object.send(attribute_name).is_a?(Hash) )
+          return lambda { |element| element.send(options_value) }
+        else
+          return lambda { @object.send(attribute_name).send(options_value) }
+        end
+      else
+        if options_value.is_a? Proc
+          return options_value
+        else
+          return lambda { options_value } 
+        end
+      end
+    end
+
   end
 end
 
