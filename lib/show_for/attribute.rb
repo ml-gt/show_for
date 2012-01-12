@@ -39,19 +39,25 @@ module ShowFor
 private
 
     def get_block_from_value_option(attribute_name, options)
-      return unless options_value = options[:value]
-      if options_value.is_a? Symbol
-        if (@object.send(attribute_name).is_a?(Array) || @object.send(attribute_name).is_a?(Hash) )
-          return lambda { |element| element.send(options_value) }
+      case options[:value]
+        when nil
+          nil
+        when Symbol
+          get_block_from_symbol(attribute_name, options)
+        when Proc
+          options[:value]
         else
-          return lambda { @object.send(attribute_name).send(options_value) }
-        end
-      else
-        if options_value.is_a? Proc
-          return options_value
+          lambda { options[:value] } 
+      end
+    end
+    
+    def get_block_from_symbol(attribute_name, options)
+      attribute = @object.send(attribute_name)
+      case attribute
+        when Array, Hash
+          lambda { |element| element.send(options[:value]) }
         else
-          return lambda { options_value } 
-        end
+          lambda { attribute.send(options[:value]) }
       end
     end
 
